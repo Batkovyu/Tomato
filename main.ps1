@@ -1,5 +1,5 @@
 ﻿Write-Host "Launching...Please wait..."
-
+# bad comment
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]
 public static extern IntPtr GetConsoleWindow();
