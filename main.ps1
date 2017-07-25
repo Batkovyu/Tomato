@@ -1,4 +1,4 @@
-﻿Write-Host "Launching...Please wait"
+﻿Write-Host "Launching...Please wait..."
 
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]
