@@ -1,0 +1,171 @@
+<Controls:MetroWindow 
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+
+	Height="94" 
+	Width="300"
+    BorderThickness="0"
+    Background="#3c3c3c"
+    WindowTitleBrush="#393939"
+    NonActiveWindowTitleBrush="#393939"
+    Foreground="#FFFFFF"
+    GlowBrush="Black"
+    ShowMaxRestoreButton="False"
+    ShowMinButton="True"
+    RenderOptions.ClearTypeHint="Enabled"
+    TextOptions.TextFormattingMode="Display"
+    ShowTitleBar="True"
+    Title="Tomato"
+
+    ResizeMode="CanMinimize"
+    >
+    <Window.Resources>
+         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source=".\resources\Icons.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatSlider.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="CloseButtonBackgroundHighlighted" Color="Red"/>
+    <SolidColorBrush x:Key="CloseButtonBackgroundPressed" Color="Red"/>
+    <SolidColorBrush x:Key="CloseButtonStroke" Color="Red"/>
+    <SolidColorBrush x:Key="CloseButtonStrokeHighlighted" Color="Red"/>
+
+        </ResourceDictionary>
+    </Window.Resources>
+
+
+<Window.TaskbarItemInfo>
+    <TaskbarItemInfo 
+        Overlay=".\resources\tomato.png" />
+</Window.TaskbarItemInfo>
+
+<Controls:MetroWindow.RightWindowCommands>
+    <Controls:WindowCommands>
+        <Button Name="Settings_B" Cursor="Hand"> 
+            <iconPacks:PackIconMaterial Height="16" Width="16" Foreground="#FFFFFF" Kind="Settings" VerticalAlignment="Center" HorizontalAlignment="Center" />
+            <Button.ToolTip>
+                <ToolTip>
+                    <TextBlock TextWrapping="Wrap">
+                        Settings
+                    </TextBlock>
+                </ToolTip>
+            </Button.ToolTip>
+        </Button>       
+    </Controls:WindowCommands>
+</Controls:MetroWindow.RightWindowCommands>
+
+
+
+               
+<Grid  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"> 
+    <Grid Name="Main_G">
+        <Controls:MetroProgressBar Minimum="0" Name="Pbar" Height="64" BorderThickness="0"  Background="#3c3c3c" Foreground="#c87d2b"/>
+            <Grid > 
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="240"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Name="Time"  Text="{Binding ElementName=Pbar, Path=Value, StringFormat={}{0:0}%}" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <TextBlock.ToolTip>
+                       <ToolTip>
+                           <TextBlock TextWrapping="Wrap">
+                              Session Time
+                           </TextBlock>
+                       </ToolTip>
+                   </TextBlock.ToolTip>
+                </TextBlock>
+                <Button Grid.Column="1" Name="Start" 
+                    IsDefault="True" 
+                    Cursor="Hand" 
+                    BorderBrush="#FFFFFF"
+                    BorderThickness="3"
+                    Height="48" Width="48"
+                    Style="{DynamicResource MetroCircleButtonStyle}" > 
+                    <iconPacks:PackIconMaterial Height="16" Width="16" Foreground="#FFFFFF" Kind="Play" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock.ToolTip>
+                       <ToolTip>
+                           <TextBlock TextWrapping="Wrap">
+                              Start
+                           </TextBlock>
+                       </ToolTip>
+                   </TextBlock.ToolTip>
+                </Button>
+                <Button Grid.Column="1" Name="Stop" 
+                    IsDefault="True" 
+                    Visibility="Hidden"
+                    Cursor="Hand" 
+                    BorderBrush="#FFFFFF"
+                    BorderThickness="3"
+                    Height="48" Width="48"
+                    Style="{DynamicResource MetroCircleButtonStyle}" > 
+                    <iconPacks:PackIconMaterial Height="16" Width="16" Foreground="#FFFFFF" Kind="Stop" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock.ToolTip>
+                       <ToolTip>
+                           <TextBlock TextWrapping="Wrap">
+                              Stop
+                           </TextBlock>
+                       </ToolTip>
+                   </TextBlock.ToolTip>
+                </Button>
+            </Grid>
+     </Grid>
+    <Grid Name="Settings_G" Visibility="Hidden" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>   
+        <Grid Grid.Column="0" Margin="10 0 0 0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions> 
+            <CheckBox Grid.Row="0" Name="Desktop_c" IsChecked="True" Cursor="Hand" Content="Toggle Desktop" Foreground="#FFFFFF"/>  
+            <CheckBox Grid.Row="1" Name="Sound_c" IsChecked="True"  Cursor="Hand" Content="Play Sound" Foreground="#FFFFFF"/>
+                                                   
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions> 
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions> 
+                <Slider Grid.Column="0" Name="Minutes1_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="10" Maximum="60" Value="20" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
+                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes1_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
+                    <TextBlock.ToolTip>
+                       <ToolTip>
+                           <TextBlock TextWrapping="Wrap">
+                              Session Time
+                           </TextBlock>
+                       </ToolTip>
+                   </TextBlock.ToolTip>
+                </TextBlock>
+            </Grid> 
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions> 
+                <Slider Grid.Column="0" Name="Minutes2_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="5" Maximum="15" Value="7" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
+                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes2_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
+                    <TextBlock.ToolTip>
+                       <ToolTip>
+                           <TextBlock TextWrapping="Wrap">
+                              Time to Rest
+                           </TextBlock>
+                       </ToolTip>
+                   </TextBlock.ToolTip>
+                </TextBlock>
+            </Grid>                     
+        </Grid>
+    </Grid>
+</Grid>
+</Controls:MetroWindow>        

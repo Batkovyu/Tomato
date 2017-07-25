@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<Settings>
+  <Minutes>
+    <Value1>20</Value1>
+    <Value2>5</Value2>
+  </Minutes>
+  <Sound>True</Sound>
+  <Desktop>False</Desktop>
+</Settings>
