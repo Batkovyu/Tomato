@@ -1,5 +1,38 @@
-﻿Write-Host "Launching...Please wait..."
-# bad comment
+﻿#requires -version 3.0
+<#
+.SYNOPSIS
+  <Overview of script>
+.DESCRIPTION
+  <Brief description of script>
+.PARAMETER 
+  Not available
+.INPUTS
+  Not available
+.OUTPUTS
+  WPF form
+.NOTES
+  Version:        1.0
+  Author:         batkovyu@gmail.com
+  Creation Date:  01.05.2017
+  Purpose/Change: First Init
+  
+.EXAMPLE
+  Not available
+#>
+
+#region [Requirements]
+
+Write-Host "Launching...Please wait..."
+
+#Required Function Libraries
+$ScriptPath = Split-Path -parent $MyInvocation.MyCommand.Definition 
+[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework') 
+[void][System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')  
+[void][System.Reflection.Assembly]::LoadFrom("$ScriptPath\assembly\MahApps.Metro.dll")      
+[void][System.Reflection.Assembly]::LoadFrom("$ScriptPath\assembly\MahApps.Metro.IconPacks.dll")  
+[void][System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") 
+
+#Required WinAPI Functions
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]
 public static extern IntPtr GetConsoleWindow();
@@ -7,99 +40,126 @@ public static extern IntPtr GetConsoleWindow();
 [DllImport("user32.dll")]
 public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 '
+#endregion [Requirements]
 
+#region [Declarations]
 
-
-
-$scriptPath = split-path -parent $MyInvocation.MyCommand.Definition 
-[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework') 
-[void][System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')  
-[void][System.Reflection.Assembly]::LoadFrom("$scriptPath\assembly\MahApps.Metro.dll")      
-[void][System.Reflection.Assembly]::LoadFrom("$scriptPath\assembly\MahApps.Metro.IconPacks.dll")  
+#Script Version
+$ScriptVersion = [System.Version]"1.0"
 
 #Initialize WPF variable
 $Global:WPF = [hashtable]::Synchronized(@{})
 
-#region Functions
-function Load-XamlFromFile($Path){
+#Marker for 'time to rest' form
+$Global:Rest = $false 
+
+#endregion [Declarations]
+
+#region [Functions]
+
+function Load-XamlFromFile{
+    <#
+    .SYNOPSIS
+    Load xaml file, Create global WPF variable with objects and output form to a host.
+    #>
+    param(
+        [Parameter(Position = 0,
+                   Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $Path
+    )
     $XamlLoader = New-Object System.Xml.XmlDocument
     $XamlLoader.Load($Path)
     
     $Reader = New-Object System.Xml.XmlNodeReader $XamlLoader
     
     $Form = [Windows.Markup.XamlReader]::Load($Reader)
+    
     #Fill WPF Variables
-    $XamlLoader.SelectNodes("//*[@Name]") | ForEach-Object { $WPF."$($_.Name)" = $Form.FindName($_.Name)}
+    $XamlLoader.SelectNodes("//*[@Name]") | ForEach-Object { 
+        $WPF."$($_.Name)" = $Form.FindName($_.Name)
+    }
     
     $Form
 }
 
-function ConvertTo-Seconds($minutes){
-    $global:minutes = $minutes
-    $global:totalseconds = new-timespan -Minutes $minutes
+function Update-Form{
+    <#
+    .SYNOPSIS
 
-    $WPF.Time.Text    = $([string]::Format("{0:d2}:{1:d2}", `
-                            $global:totalseconds.minutes, `
-                            $global:totalseconds.seconds))
+    #>
+    param(
+        [Parameter(Position = 0,
+                   Mandatory = $true)]
+        [Int]
+        $Minutes
+    )
+    $Global:Minutes = $Minutes
+    $Global:TotalSeconds = New-TimeSpan -Minutes $Minutes
 
-    $WPF.Pbar.Maximum = $global:totalseconds.TotalSeconds
-    $WPF.Pbar.Value   = 0
+    $WPF.Time.Text = $([string]::Format(
+                            "{0:d2}:{1:d2}", 
+                            $Global:TotalSeconds.Minutes, 
+                            $Global:TotalSeconds.Seconds)
+                      )
 
+    $WPF.Pbar.Maximum = $Global:TotalSeconds.TotalSeconds
+    $WPF.Pbar.Value = 0
 }
-#endregion Functions
+#endregion [Functions]
 
+#region [Initialisations]
 
+#Load xaml Form and fill $WPF variable
+$Form = Load-XamlFromFile -Path "$ScriptPath\main.xaml" 
 
+#Timer will update Form every second
+$WPF.Timer = New-Object System.Windows.Forms.Timer
+$WPF.Timer.Interval = 1000  #1 second   
 
+#Filling Form with data saved in settings.xml
+[xml]$Settings = Get-Content -Path "$ScriptPath\Settings.xml"
+$WPF.Desktop_c.IsChecked = [System.Convert]::ToBoolean($Settings.Settings.Desktop)
+$WPF.Sound_c.IsChecked = [System.Convert]::ToBoolean($Settings.Settings.Sound)
+$WPF.Minutes1_s.Value = $Settings.Settings.Minutes.Value1  #Session Time
+$WPF.Minutes2_s.Value = $Settings.Settings.Minutes.Value2  #Time for Rest
 
+Update-Form -Minutes $Settings.Settings.Minutes.Value1
 
-$Form = Load-XamlFromFile -Path "$scriptPath\main.xaml" 
+#endregion [Initialisations]
 
-[xml]$settings = Get-Content -Path "$scriptPath\Settings.xml"
-
-$WPF.Desktop_c.IsChecked = [System.Convert]::ToBoolean($settings.Settings.Desktop)
-$WPF.Sound_c.IsChecked   = [System.Convert]::ToBoolean($settings.Settings.Sound)
-#Session Time
-$WPF.Minutes1_s.Value    = $settings.Settings.Minutes.Value1
-#Time for Rest
-$WPF.Minutes2_s.Value    = $settings.Settings.Minutes.Value2
-
-$global:rest = $false 
-
-ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value1
- 
-#Handlers deffinitions
+#region [Handlers]
 $Handler = [PSCustomObject]@{
     Start = [PSCustomObject]@{
         Click = [System.Windows.RoutedEventHandler]{
-           param($Sender, $EventArgs)
+            param($Sender, $EventArgs)
+            
             if ($WPF.Sound_c.IsChecked) {
                 [System.Media.SystemSounds]::Beep.Play()
             }
-            $WPF.Start.Visibility      = "Hidden"
-            $WPF.Stop.Visibility       = "Visible"
+            $WPF.Start.Visibility = "Hidden"
+            $WPF.Stop.Visibility = "Visible"
             $WPF.Settings_B.Visibility = "Hidden"
             $Form.TaskbarItemInfo.ProgressState = "Normal"
-
-            [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") 
-            $WPF.Timer          = New-Object System.Windows.Forms.Timer
-            $WPF.Timer.Interval = 1000    
 
             $TickAction = {
                 if ($WPF.Timer) {
                     #If time not finished
                     if ([math]::Ceiling($global:timeSpan.TotalSeconds) -gt 0 ) {
-                        $global:timeSpan = New-Timespan $(get-date) $global:endTime 
+                        $global:TimeSpan = New-TimeSpan $(Get-Date) $global:EndTime 
 
                         #Update Text
-                        $WPF.Time.Text = $([string]::Format("{0:d2}:{1:d2}", `
-                            $global:timeSpan.minutes, `
-                            $global:timeSpan.seconds))
+                        $WPF.Time.Text = $([string]::Format(
+                                                "{0:d2}:{1:d2}",
+                                                $global:TimeSpan.minutes,
+                                                $global:TimeSpan.seconds)
+                                          )
                         #Update Progress Bar
                         $WPF.Pbar.Value = $global:totalseconds.TotalSeconds - $global:timeSpan.TotalSeconds
 
                         $Form.TaskbarItemInfo.ProgressValue = $($WPF.Pbar.Value/$WPF.Pbar.Maximum)
-                    }Else {
+                    }else {
                         $WPF.Timer.Stop()
 
                         if ($WPF.Sound_c.IsChecked) {
@@ -112,24 +172,24 @@ $Handler = [PSCustomObject]@{
                         }
 
                         if ($global:rest -eq $false) {
-                            ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value2 
+                            Update-Form -minutes $settings.Settings.Minutes.Value2 
                             $global:rest = $true
-                        }Else{
-                            ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value1
+                        }else{
+                            Update-Form -minutes $settings.Settings.Minutes.Value1
                             $global:rest = $false
                         }
 
-                        $WPF.Start.Visibility      = "Visible"
-                        $WPF.Stop.Visibility       = "Hidden"
+                        $WPF.Start.Visibility = "Visible"
+                        $WPF.Stop.Visibility = "Hidden"
                         $WPF.Settings_B.Visibility = "Visible"
                         $WPF.Timer.Remove_Tick($TickAction)
                     }
                 }
             }
             
-            $global:startTime = Get-Date
-            $global:endTime   = $startTime.addMinutes($minutes)
-            $global:timeSpan  = New-Timespan $global:startTime $global:endTime
+            $global:StartTime = Get-Date
+            $global:EndTime = $StartTime.AddMinutes($Minutes)
+            $global:TimeSpan = New-Timespan $global:StartTime $global:EndTime
             
             $WPF.Timer.Add_Tick($TickAction)
             $WPF.Timer.Start()
@@ -138,39 +198,43 @@ $Handler = [PSCustomObject]@{
     
     Stop = [PSCustomObject]@{
         Click = [System.Windows.RoutedEventHandler]{
-           param($Sender, $EventArgs)
+            param($Sender, $EventArgs)
+            
             $WPF.Timer.Stop()
             $Form.TaskbarItemInfo.ProgressState = "None"
             if ($global:rest -eq $false) {
-                ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value1
-            }Else{
-                ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value2
+                Update-Form -Minutes $settings.Settings.Minutes.Value1
+            }else{
+                Update-Form -Minutes $settings.Settings.Minutes.Value2
             }
 
-            $WPF.Start.Visibility      = "Visible"
-            $WPF.Stop.Visibility       = "Hidden"
+            $WPF.Start.Visibility = "Visible"
+            $WPF.Stop.Visibility = "Hidden"
             $WPF.Settings_B.Visibility = "Visible"
 
-            $WPF.Time.Text = $([string]::Format("{0:d2}:{1:d2}", `
-                        $global:totalseconds.minutes, `
-                        $global:totalseconds.seconds))
+            $WPF.Time.Text = $([string]::Format(
+                                "{0:d2}:{1:d2}",
+                                $global:totalseconds.minutes,
+                                $global:totalseconds.seconds)
+                              )
             $WPF.Pbar.Value = 0
         }
     }
     Settings = [PSCustomObject]@{
         Click = [System.Windows.RoutedEventHandler]{
-           param($Sender, $EventArgs)
+            param($Sender, $EventArgs)
+            
             if ($WPF.Main_G.Visibility -eq "Visible"){
                 $WPF.Settings_G.Visibility = "Visible"
-                $WPF.Main_G.Visibility     = "Hidden"
+                $WPF.Main_G.Visibility = "Hidden"
                 $Form.TaskbarItemInfo.ProgressState = "None"
-            }Else{
+            }else{
                 if ($global:rest -eq $false) {
-                    ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value1 
-                }Else{
-                    ConvertTo-Seconds -minutes $settings.Settings.Minutes.Value2 
+                    Update-Form -Minutes $Settings.Settings.Minutes.Value1 
+                }else{
+                    Update-Form -Minutes $Settings.Settings.Minutes.Value2 
                 }
-                $WPF.Main_G.Visibility     = "Visible"
+                $WPF.Main_G.Visibility = "Visible"
                 $WPF.Settings_G.Visibility = "Hidden"
                 $Form.TaskbarItemInfo.ProgressState = "Normal"
             }
@@ -178,56 +242,61 @@ $Handler = [PSCustomObject]@{
     }
     Desktop = [PSCustomObject]@{
         Checked= [System.Windows.RoutedEventHandler]{
-           $settings.Settings.Desktop = "True"
-           $settings.Save("$scriptPath\Settings.xml")
+           $Settings.Settings.Desktop = "True"
+           $Settings.Save("$ScriptPath\Settings.xml")
         }
         Unchecked= [System.Windows.RoutedEventHandler]{
            $settings.Settings.Desktop = "False"
-           $settings.Save("$scriptPath\Settings.xml")
+           $settings.Save("$ScriptPath\Settings.xml")
         }
     }
     Sound = [PSCustomObject]@{
         Checked= [System.Windows.RoutedEventHandler]{
-           $settings.Settings.Sound = "True"
-           $settings.Save("$scriptPath\Settings.xml")
+           $Settings.Settings.Sound = "True"
+           $Settings.Save("$ScriptPath\Settings.xml")
         }
         Unchecked= [System.Windows.RoutedEventHandler]{
-           $settings.Settings.Sound = "False"
-           $settings.Save("$scriptPath\Settings.xml")
+           $Settings.Settings.Sound = "False"
+           $Settings.Save("$ScriptPath\Settings.xml")
         }
     } 
     Minutes1= [PSCustomObject]@{
         ValueChanged= [System.Windows.RoutedEventHandler]{
            param($Sender, $EventArgs)
-           $settings.Settings.Minutes.Value1 = "$($EventArgs.NewValue)"
-           $settings.Save("$scriptPath\Settings.xml")
+           
+           $Settings.Settings.Minutes.Value1 = "$($EventArgs.NewValue)"
+           $Settings.Save("$ScriptPath\Settings.xml")
         }
     }  
     Minutes2= [PSCustomObject]@{
         ValueChanged= [System.Windows.RoutedEventHandler]{
            param($Sender, $EventArgs)
-           $settings.Settings.Minutes.Value2 = "$($EventArgs.NewValue)"
-           $settings.Save("$scriptPath\Settings.xml")
+           
+           $Settings.Settings.Minutes.Value2 = "$($EventArgs.NewValue)"
+           $Settings.Save("$ScriptPath\Settings.xml")
         }
     }           
 }
 
+$WPF.Start.AddHandler([System.Windows.Controls.Button]::ClickEvent,$Handler.Start.Click)
+$WPF.Stop.AddHandler([System.Windows.Controls.Button]::ClickEvent,$Handler.Stop.Click)
 
-$WPF.Start.     AddHandler([System.Windows.Controls.Button]::ClickEvent,       $Handler.Start.Click)
-$WPF.Stop.      AddHandler([System.Windows.Controls.Button]::ClickEvent,       $Handler.Stop.Click)
+$WPF.Settings_B.AddHandler([System.Windows.Controls.Button]::ClickEvent,$Handler.Settings.Click)
 
-$WPF.Settings_B.AddHandler([System.Windows.Controls.Button]::ClickEvent,       $Handler.Settings.Click)
-$WPF.Desktop_c. AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,   $Handler.Desktop.Checked)
-$WPF.Desktop_c. AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent, $Handler.Desktop.Unchecked)
-$WPF.Sound_c.   AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,   $Handler.Sound.Checked)
-$WPF.Sound_c.   AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent, $Handler.Sound.Unchecked)
+$WPF.Desktop_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.Desktop.Checked)
+$WPF.Desktop_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.Desktop.Unchecked)
+
+$WPF.Sound_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.Sound.Checked)
+$WPF.Sound_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.Sound.Unchecked)
 
 $WPF.Minutes1_s.AddHandler([System.Windows.Controls.Slider]::ValueChangedEvent,$Handler.Minutes1.ValueChanged)
 $WPF.Minutes2_s.AddHandler([System.Windows.Controls.Slider]::ValueChangedEvent,$Handler.Minutes2.ValueChanged)
 
 #Hide console
-$consolePtr = [Console.Window]::GetConsoleWindow()
-[void][Console.Window]::ShowWindow($consolePtr, 0)
+$ConsolePtr = [Console.Window]::GetConsoleWindow()
+[void][Console.Window]::ShowWindow($ConsolePtr, 0)
 
 #Run
-[void]$Form.Dispatcher.InvokeAsync({[void]$Form.ShowDialog()}).Wait()
+[void]$Form.Dispatcher.InvokeAsync({
+    [void]$Form.ShowDialog()
+}).Wait()
