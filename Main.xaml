@@ -138,7 +138,7 @@
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions> 
-                <Slider Grid.Column="0" Name="Minutes1_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="10" Maximum="60" Value="20" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
+                <Slider Grid.Column="0" Name="SessionTime_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="10" Maximum="60" Value="20" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
                 <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes1_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
                     <TextBlock.ToolTip>
                        <ToolTip>
@@ -154,7 +154,7 @@
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions> 
-                <Slider Grid.Column="0" Name="Minutes2_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="5" Maximum="15" Value="7" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
+                <Slider Grid.Column="0" Name="BreakTime_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="5" Maximum="15" Value="7" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
                 <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes2_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
                     <TextBlock.ToolTip>
                        <ToolTip>
