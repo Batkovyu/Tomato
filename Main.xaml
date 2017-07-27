@@ -3,6 +3,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    Name="MetroWindow"
 
 	Height="94" 
 	Width="300"
@@ -18,7 +19,6 @@
     TextOptions.TextFormattingMode="Display"
     ShowTitleBar="True"
     Title="Tomato"
-
     ResizeMode="CanMinimize"
     >
     <Window.Resources>
@@ -30,11 +30,6 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatSlider.xaml" />
             </ResourceDictionary.MergedDictionaries>
-    <SolidColorBrush x:Key="CloseButtonBackgroundHighlighted" Color="Red"/>
-    <SolidColorBrush x:Key="CloseButtonBackgroundPressed" Color="Red"/>
-    <SolidColorBrush x:Key="CloseButtonStroke" Color="Red"/>
-    <SolidColorBrush x:Key="CloseButtonStrokeHighlighted" Color="Red"/>
-
         </ResourceDictionary>
     </Window.Resources>
 
@@ -139,7 +134,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions> 
                 <Slider Grid.Column="0" Name="SessionTime_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="10" Maximum="60" Value="20" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
-                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes1_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
+                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=SessionTime_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
                     <TextBlock.ToolTip>
                        <ToolTip>
                            <TextBlock TextWrapping="Wrap">
@@ -155,11 +150,11 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions> 
                 <Slider Grid.Column="0" Name="BreakTime_s" Style="{DynamicResource FlatSlider}" Cursor="Hand" Minimum="5" Maximum="15" Value="7" TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#c87d2b"/>
-                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=Minutes2_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
+                <TextBlock Grid.Column="1" Text="{Binding Value, ElementName=BreakTime_s, StringFormat={}{0:N0} min}" Margin="5 0 0 0" VerticalAlignment="Center">
                     <TextBlock.ToolTip>
                        <ToolTip>
                            <TextBlock TextWrapping="Wrap">
-                              Time to Rest
+                              Time for Rest
                            </TextBlock>
                        </ToolTip>
                    </TextBlock.ToolTip>

@@ -94,10 +94,10 @@ function Load-XamlFromFile{
     $Form
 }
 
-function Update-Form{
+function Reset-Form{
     <#
     .SYNOPSIS
-    Convert seconds to TimeSpan and update ProgressBar
+    Switch between Session and Break times and Reset ProgressBar
     #>
     param(
         [Parameter(Position = 0,
@@ -116,6 +116,14 @@ function Update-Form{
 
     $WPF.ProgressBar.Maximum = $global:TotalSeconds.TotalSeconds
     $WPF.ProgressBar.Value = 0
+
+    if ($global:Rest -eq $false) {
+        $WPF.MetroWindow.Title = "Session"
+        $WPF.ProgressBar.Foreground = "#c87d2b"
+    }else{
+        $WPF.MetroWindow.Title = "Break"
+        $WPF.ProgressBar.Foreground = "#2b76c8"
+    }
 }
 
 #endregion [Functions]
@@ -137,7 +145,7 @@ $WPF.PlaySound_c.IsChecked = [System.Convert]::ToBoolean($Settings.Values.PlaySo
 $WPF.SessionTime_s.Value = $Settings.Values.SessionTime  
 $WPF.BreakTime_s.Value = $Settings.Values.BreakTime
 
-Update-Form -Minutes $Settings.Values.SessionTime
+Reset-Form -Minutes $Settings.Values.SessionTime
 
 #endregion [Initialisations]
 
@@ -156,48 +164,54 @@ $Handler = [PSCustomObject]@{
             $WPF.Settings_B.Visibility = "Hidden"
 
             $Form.TaskbarItemInfo.ProgressState = "Normal"
+            
+            if ($global:Rest -eq $false) {
+                $WPF.MetroWindow.Title = "Session"
+                $WPF.ProgressBar.Foreground = "#c87d2b"
+            }else{
+                $WPF.MetroWindow.Title = "Break"
+                $WPF.ProgressBar.Foreground = "#2b76c8"
+            }
 
             $TickAction = {
-                if ($WPF.Timer) {
-                    #If time not finished
-                    if ([math]::Ceiling($global:TimeSpan.TotalSeconds) -gt 0 ) {
-                        $global:TimeSpan = New-TimeSpan $(Get-Date) $global:EndTime 
+                #If time not finished
+                if ([math]::Ceiling($global:TimeSpan.TotalSeconds) -gt 0 ) {
+                    $global:TimeSpan = New-TimeSpan $(Get-Date) $global:EndTime 
 
-                        #Update Text
-                        $WPF.Time.Text = $([string]::Format(
-                                                "{0:d2}:{1:d2}",
-                                                $global:TimeSpan.minutes,
-                                                $global:TimeSpan.seconds)
-                                          )
-                        #Update Progress Bar
-                        $WPF.ProgressBar.Value = $global:TotalSeconds.TotalSeconds - $global:TimeSpan.TotalSeconds
+                    #Update Text
+                    $WPF.Time.Text = $([string]::Format(
+                                            "{0:d2}:{1:d2}",
+                                            $global:TimeSpan.minutes,
+                                            $global:TimeSpan.seconds)
+                                        )
+                    #Update Progress Bar
+                    $WPF.ProgressBar.Value = $global:TotalSeconds.TotalSeconds - $global:TimeSpan.TotalSeconds
 
-                        $Form.TaskbarItemInfo.ProgressValue = $($WPF.ProgressBar.Value/$WPF.ProgressBar.Maximum)
-                    }else {
-                        $WPF.Timer.Stop()
+                    $Form.TaskbarItemInfo.ProgressValue = $($WPF.ProgressBar.Value/$WPF.ProgressBar.Maximum)
+                }else {
+                    $WPF.Timer.Stop()
 
-                        if ($WPF.PlaySound_c.IsChecked) {
-                            [System.Media.SystemSounds]::Beep.Play()
-                        }
-
-                        if ($WPF.ToggleDesktop_c.IsChecked) {
-                            $ShellExp = New-Object -ComObject Shell.Application
-                            $ShellExp.ToggleDesktop()
-                        }
-
-                        if ($global:Rest -eq $false) {
-                            Update-Form -minutes $Settings.Values.BreakTime 
-                            $global:Rest = $true
-                        }else{
-                            Update-Form -minutes $Settings.Values.SessionTime 
-                            $global:Rest = $false
-                        }
-
-                        $WPF.Start.Visibility = "Visible"
-                        $WPF.Stop.Visibility = "Hidden"
-                        $WPF.Settings_B.Visibility = "Visible"
-                        $WPF.Timer.Remove_Tick($TickAction)
+                    if ($WPF.PlaySound_c.IsChecked) {
+                        [System.Media.SystemSounds]::Beep.Play()
                     }
+
+                    if ($WPF.ToggleDesktop_c.IsChecked) {
+                        $ShellExp = New-Object -ComObject Shell.Application
+                        $ShellExp.ToggleDesktop()
+                    }
+
+                    if ($global:Rest -eq $false) {
+                        $global:Rest = $true
+                        Reset-Form -minutes $Settings.Values.BreakTime 
+                    }else{
+                        $global:Rest = $false
+                        Reset-Form -minutes $Settings.Values.SessionTime 
+                    }
+
+                    $WPF.Start.Visibility = "Visible"
+                    $WPF.Stop.Visibility = "Hidden"
+                    $WPF.Settings_B.Visibility = "Visible"
+                    $WPF.Timer.Remove_Tick($TickAction)
                 }
             }
             
@@ -217,9 +231,9 @@ $Handler = [PSCustomObject]@{
             $WPF.Timer.Stop()
             $Form.TaskbarItemInfo.ProgressState = "None"
             if ($global:Rest -eq $false) {
-                Update-Form -Minutes $settings.Values.SessionTime
+                Reset-Form -Minutes $settings.Values.SessionTime
             }else{
-                Update-Form -Minutes $settings.Values.BreakTime
+                Reset-Form -Minutes $settings.Values.BreakTime
             }
 
             $WPF.Start.Visibility = "Visible"
@@ -245,9 +259,9 @@ $Handler = [PSCustomObject]@{
                 $Form.TaskbarItemInfo.ProgressState = "None"
             }else{
                 if ($global:Rest -eq $false) {
-                    Update-Form -Minutes $Settings.Values.SessionTime
+                    Reset-Form -Minutes $Settings.Values.SessionTime
                 }else{
-                    Update-Form -Minutes $Settings.Values.BreakTime 
+                    Reset-Form -Minutes $Settings.Values.BreakTime 
                 }
                 $WPF.Main_G.Visibility = "Visible"
                 $WPF.Settings_G.Visibility = "Hidden"

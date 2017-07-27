@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Values>
-  <SessionTime>20</SessionTime>
-  <BreakTime>20</BreakTime>
+  <SessionTime>25</SessionTime>
+  <BreakTime>5</BreakTime>
   <PlaySound>True</PlaySound>
   <ToggleDesktop>False</ToggleDesktop>
 </Values>
