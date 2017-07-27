@@ -2,6 +2,6 @@
 <Values>
   <SessionTime>20</SessionTime>
   <BreakTime>20</BreakTime>
-  <Sound>True</Sound>
-  <Desktop>False</Desktop>
+  <PlaySound>True</PlaySound>
+  <ToggleDesktop>False</ToggleDesktop>
 </Values>

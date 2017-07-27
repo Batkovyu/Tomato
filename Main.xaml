@@ -64,13 +64,13 @@
                
 <Grid  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"> 
     <Grid Name="Main_G">
-        <Controls:MetroProgressBar Minimum="0" Name="Pbar" Height="64" BorderThickness="0"  Background="#3c3c3c" Foreground="#c87d2b"/>
+        <Controls:MetroProgressBar Minimum="0" Name="ProgressBar" Height="64" BorderThickness="0"  Background="#3c3c3c" Foreground="#c87d2b"/>
             <Grid > 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="240"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Name="Time"  Text="{Binding ElementName=Pbar, Path=Value, StringFormat={}{0:0}%}" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                <TextBlock Name="Time"  Text="{Binding ElementName=ProgressBar, Path=Value, StringFormat={}{0:0}%}" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center" >
                     <TextBlock.ToolTip>
                        <ToolTip>
                            <TextBlock TextWrapping="Wrap">
@@ -124,8 +124,8 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions> 
-            <CheckBox Grid.Row="0" Name="Desktop_c" IsChecked="True" Cursor="Hand" Content="Toggle Desktop" Foreground="#FFFFFF"/>  
-            <CheckBox Grid.Row="1" Name="Sound_c" IsChecked="True"  Cursor="Hand" Content="Play Sound" Foreground="#FFFFFF"/>
+            <CheckBox Grid.Row="0" Name="ToggleDesktop_c" IsChecked="True" Cursor="Hand" Content="Toggle Desktop" Foreground="#FFFFFF"/>  
+            <CheckBox Grid.Row="1" Name="PlaySound_c" IsChecked="True"  Cursor="Hand" Content="Play Sound" Foreground="#FFFFFF"/>
                                                    
         </Grid>
         <Grid Grid.Column="1">

@@ -1,9 +1,10 @@
 ﻿#requires -version 3.0
 <#
 .SYNOPSIS
-  <Overview of script>
+  Tomato timer via WPF and Mahapps
 .DESCRIPTION
-  <Brief description of script>
+  Script realizes the Pomodoro Technique. It is a time management method that uses a timer to break down work into intervals,
+  traditionally 25 minutes in length, separated by short breaks (5 min). 
 .PARAMETER 
   Not available
 .INPUTS
@@ -14,7 +15,7 @@
   Version:        1.1
   Author:         batkovyu@gmail.com
   Creation Date:  01.05.2017
-  Purpose/Change: First Init
+  Purpose/Change: Aligned with PowerShell 'PracticeAndStyle' guidline
   
 .EXAMPLE
   Not available
@@ -96,7 +97,7 @@ function Load-XamlFromFile{
 function Update-Form{
     <#
     .SYNOPSIS
-
+    Convert seconds to TimeSpan and update ProgressBar
     #>
     param(
         [Parameter(Position = 0,
@@ -113,9 +114,10 @@ function Update-Form{
                             $global:TotalSeconds.Seconds)
                       )
 
-    $WPF.Pbar.Maximum = $global:TotalSeconds.TotalSeconds
-    $WPF.Pbar.Value = 0
+    $WPF.ProgressBar.Maximum = $global:TotalSeconds.TotalSeconds
+    $WPF.ProgressBar.Value = 0
 }
+
 #endregion [Functions]
 
 #region [Initialisations]
@@ -130,8 +132,8 @@ $WPF.Timer.Interval = 1000  #1 second
 #Filling Form with data saved in settings.xml
 [xml]$Settings = Get-Content -Path "$ScriptPath\Settings.xml"
 
-$WPF.Desktop_c.IsChecked = [System.Convert]::ToBoolean($Settings.Values.Desktop)
-$WPF.Sound_c.IsChecked = [System.Convert]::ToBoolean($Settings.Values.Sound)
+$WPF.ToggleDesktop_c.IsChecked = [System.Convert]::ToBoolean($Settings.Values.ToggleDesktop)
+$WPF.PlaySound_c.IsChecked = [System.Convert]::ToBoolean($Settings.Values.PlaySound)
 $WPF.SessionTime_s.Value = $Settings.Values.SessionTime  
 $WPF.BreakTime_s.Value = $Settings.Values.BreakTime
 
@@ -145,12 +147,14 @@ $Handler = [PSCustomObject]@{
         Click = [System.Windows.RoutedEventHandler]{
             param($Sender, $EventArgs)
             
-            if ($WPF.Sound_c.IsChecked) {
+            if ($WPF.PlaySound_c.IsChecked) {
                 [System.Media.SystemSounds]::Beep.Play()
             }
+
             $WPF.Start.Visibility = "Hidden"
             $WPF.Stop.Visibility = "Visible"
             $WPF.Settings_B.Visibility = "Hidden"
+
             $Form.TaskbarItemInfo.ProgressState = "Normal"
 
             $TickAction = {
@@ -166,17 +170,17 @@ $Handler = [PSCustomObject]@{
                                                 $global:TimeSpan.seconds)
                                           )
                         #Update Progress Bar
-                        $WPF.Pbar.Value = $global:TotalSeconds.TotalSeconds - $global:TimeSpan.TotalSeconds
+                        $WPF.ProgressBar.Value = $global:TotalSeconds.TotalSeconds - $global:TimeSpan.TotalSeconds
 
-                        $Form.TaskbarItemInfo.ProgressValue = $($WPF.Pbar.Value/$WPF.Pbar.Maximum)
+                        $Form.TaskbarItemInfo.ProgressValue = $($WPF.ProgressBar.Value/$WPF.ProgressBar.Maximum)
                     }else {
                         $WPF.Timer.Stop()
 
-                        if ($WPF.Sound_c.IsChecked) {
+                        if ($WPF.PlaySound_c.IsChecked) {
                             [System.Media.SystemSounds]::Beep.Play()
                         }
 
-                        if ($WPF.Desktop_c.IsChecked) {
+                        if ($WPF.ToggleDesktop_c.IsChecked) {
                             $ShellExp = New-Object -ComObject Shell.Application
                             $ShellExp.ToggleDesktop()
                         }
@@ -227,9 +231,10 @@ $Handler = [PSCustomObject]@{
                                 $global:TotalSeconds.minutes,
                                 $global:TotalSeconds.seconds)
                               )
-            $WPF.Pbar.Value = 0
+            $WPF.ProgressBar.Value = 0
         }
     }
+
     Settings = [PSCustomObject]@{
         Click = [System.Windows.RoutedEventHandler]{
             param($Sender, $EventArgs)
@@ -250,26 +255,29 @@ $Handler = [PSCustomObject]@{
             }
         }
     }
-    Desktop = [PSCustomObject]@{
+
+    ToggleDesktop = [PSCustomObject]@{
         Checked= [System.Windows.RoutedEventHandler]{
-           $Settings.Values.Desktop = "True"
+           $Settings.Values.ToggleDesktop = "True"
            $Settings.Save("$ScriptPath\Settings.xml")
         }
         Unchecked= [System.Windows.RoutedEventHandler]{
-           $settings.Values.Desktop = "False"
+           $settings.Values.ToggleDesktop = "False"
            $settings.Save("$ScriptPath\Settings.xml")
         }
     }
-    Sound = [PSCustomObject]@{
+
+    PlaySound = [PSCustomObject]@{
         Checked= [System.Windows.RoutedEventHandler]{
-           $Settings.Values.Sound = "True"
+           $Settings.Values.PlaySound = "True"
            $Settings.Save("$ScriptPath\Settings.xml")
         }
         Unchecked= [System.Windows.RoutedEventHandler]{
-           $Settings.Values.Sound = "False"
+           $Settings.Values.PlaySound = "False"
            $Settings.Save("$ScriptPath\Settings.xml")
         }
     } 
+
     SessionTime= [PSCustomObject]@{
         ValueChanged= [System.Windows.RoutedEventHandler]{
            param($Sender, $EventArgs)
@@ -278,6 +286,7 @@ $Handler = [PSCustomObject]@{
            $Settings.Save("$ScriptPath\Settings.xml")
         }
     }  
+
     BreakTime= [PSCustomObject]@{
         ValueChanged= [System.Windows.RoutedEventHandler]{
            param($Sender, $EventArgs)
@@ -293,14 +302,15 @@ $WPF.Stop.AddHandler([System.Windows.Controls.Button]::ClickEvent,$Handler.Stop.
 
 $WPF.Settings_B.AddHandler([System.Windows.Controls.Button]::ClickEvent,$Handler.Settings.Click)
 
-$WPF.Desktop_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.Desktop.Checked)
-$WPF.Desktop_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.Desktop.Unchecked)
+$WPF.ToggleDesktop_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.ToggleDesktop.Checked)
+$WPF.ToggleDesktop_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.ToggleDesktop.Unchecked)
 
-$WPF.Sound_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.Sound.Checked)
-$WPF.Sound_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.Sound.Unchecked)
+$WPF.PlaySound_c.AddHandler([System.Windows.Controls.CheckBox]::CheckedEvent,$Handler.PlaySound.Checked)
+$WPF.PlaySound_c.AddHandler([System.Windows.Controls.CheckBox]::UncheckedEvent,$Handler.PlaySound.Unchecked)
 
 $WPF.SessionTime_s.AddHandler([System.Windows.Controls.Slider]::ValueChangedEvent,$Handler.SessionTime.ValueChanged)
 $WPF.BreakTime_s.AddHandler([System.Windows.Controls.Slider]::ValueChangedEvent,$Handler.BreakTime.ValueChanged)
+#endregion [Handlers]
 
 #Hide console
 $ConsolePtr = [Console.Window]::GetConsoleWindow()
